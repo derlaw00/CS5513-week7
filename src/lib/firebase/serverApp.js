@@ -1,10 +1,12 @@
 // enforces that this code can only be called on the server
 // https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns#keeping-server-only-code-out-of-the-client-environment
+//telling nextjs this is for server side only
 import "server-only";
-
+//importing cookies to adjust cookies
 import { cookies } from "next/headers";
+//importing to connect to firebase
 import { initializeServerApp, initializeApp } from "firebase/app";
-
+//importing authentification 
 import { getAuth } from "firebase/auth";
 
 // Returns an authenticated client SDK instance for use in Server Side Rendering
@@ -22,9 +24,10 @@ export async function getAuthenticatedAppForUser() {
       authIdToken,
     }
   );
-
+  //authenticating
   const auth = getAuth(firebaseServerApp);
+  //getting if logged in or not
   await auth.authStateReady();
-
+//returning results
   return { firebaseServerApp, currentUser: auth.currentUser };
 }
