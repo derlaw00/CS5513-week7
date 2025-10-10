@@ -34,18 +34,66 @@ export async function updateRestaurantImageReference(
     await updateDoc(restaurantRef, { photo: publicImageUrl });
   }
 }
-//function will update rating in firebase later
+//function updates the rating values and store a a review for new reviews
 const updateWithRating = async (
   transaction,
   docRef,
   newRatingDocument,
   review
 ) => {
-  return;
+  //getting current restaurant data from firestore
+  const restaurant = await transaction.get(docRef);
+  //storing the restaurant data into variable 
+  const data = restaurant.data();
+  //checking if there's a new rating, if so + 1 to data.numRatings 
+  const newNumRatings = data?.numRatings ? data.numRatings + 1 : 1;
+  //checking if a new sum needs to be calculated. if so adding new rating to all of current ratings
+  const newSumRating = (data?.sumRating || 0) + Number(review.rating);
+  //calculating average of ratings 
+  const newAverage = newSumRating / newNumRatings;
+  //updating the restaurant's ratings in firebase 
+  transaction.update(docRef, {
+    numRatings: newNumRatings,
+    sumRating: newSumRating,
+    avgRating: newAverage,
+  });
+  //creating new review 
+  transaction.set(newRatingDocument, {
+    ...review,
+    timestamp: Timestamp.fromDate(new Date()),
+  });
 };
-//function will add review to restaurants later
+//function adds review to restaurants
 export async function addReviewToRestaurant(db, restaurantId, review) {
-  return;
+  //error handling. Checking for if the restaurant id was passed
+        if (!restaurantId) {
+                throw new Error("No restaurant ID has been provided.");
+        }
+  //error handling. Checking for if a review was passed
+        if (!review) {
+                throw new Error("A valid review has not been provided.");
+        }
+
+        try {
+                //connecting to firebase and looking at current restaurant
+                const docRef = doc(collection(db, "restaurants"), restaurantId);
+                //looking at current restaurant's rating collection
+                const newRatingDocument = doc(
+                        collection(db, `restaurants/${restaurantId}/ratings`)
+                );
+
+                //updating the rating and storing the new review
+                await runTransaction(db, transaction =>
+                        updateWithRating(transaction, docRef, newRatingDocument, review)
+                );
+        } catch (error) {//checking for any errors
+          //response to errors
+                console.error(
+                        "There was an error adding the rating to the restaurant",
+                        error
+                );
+                throw error;
+        }
 }
 //function adds querys to the search when user adds query 
 function applyQueryFilters(q, { category, city, price, sort }) {
