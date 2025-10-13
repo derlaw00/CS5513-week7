@@ -21,7 +21,7 @@ import {
 //importing database
 import { db } from "@/src/lib/firebase/clientApp";
 
-//function updates restruant image 
+//function updates restruant image reference link
 export async function updateRestaurantImageReference(
   restaurantId,
   publicImageUrl
@@ -257,7 +257,7 @@ export async function addFakeRestaurantsAndReviews() {
           collection(db, "restaurants", docRef.id, "ratings"),
           ratingData
         );
-      }
+      }//checking for errors
     } catch (e) {
       console.log("There was an error adding the document");
       console.error("Error adding document: ", e);
